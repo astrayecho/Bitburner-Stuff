@@ -1,0 +1,139 @@
+// *** MADE FOR THE GAME BITRUNNER ***
+// THIS SCRIPT ADDS A MORE USER-FRIENDLY UI FOR
+// PURCHASING NEW SERVERS IN BULK FROM THE GAME'S API.
+
+// TO CONNECT THIS TO YOUR ACTUAL SERVER PURCHASING
+// AUTOMATION SCRIPT, LOOK FOR THE "REAL MAGIC"
+// SECTION BELOW ON LINE 123. FOR EASE OF USE, 
+// COPY THIS FOR EASY ACCESS FROM THE TERMINAL:
+// alias bot="run serverbot.script"
+
+// START THE 41
+
+// DIALOG
+tprint("*** BLEEP. BLOOP...");
+sleep(1250);
+tprint("*** AHEM. SORRY.");
+sleep(1400);
+tprint("***");
+tprint("*** WELCOME TO TH3 _ALPH4 ENT._ BULK SERVER PURCHASING AI ***");
+sleep(900);
+tprint("***");
+tprint("*** CUST0MER S3RV1CE IS THE NAME OF OUR SOFTWARE! ");
+tprint("***");
+sleep(2150);
+tprint("*** LET'S BEGIN.");
+tprint("***");
+sleep(1230);
+
+// RAM SIZE SELECTION PROMPT
+var ram = prompt("Choose RAM amount for your new servers:", {type: "select", choices: [32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288,1048576]});
+// GET SERVER COST FOR RAM AMOUNT
+srvCost = getPurchasedServerCost(ram);
+
+// DIALOG
+tprint("*** YOU CHOSE " + ram + "gb SERVERS ***");
+tprint("*** 0DD...");
+sleep(800);
+tprint("***");
+tprint("*** AHEM. THEM COST $" + srvCost + " each ***");
+sleep(2400);
+
+// CONFIRMATION CHECK ONE
+var continueCheck = prompt("SHALL WE PROCEED?", {type: "boolean"});
+
+// CONFIRMATION CHECK ONE LOGICS
+if (continueCheck == false) {
+	tprint("*** 0K TH3N... N V M");
+	sleep(555);
+	tprint("(The AI has left the chat.)");
+	exit;
+}
+// IF USER CHOSE TO CONTINUE, MORE DIALOG
+if (continueCheck == true) {
+	tprint("*** RAD A$$!!!");
+	tprint("*** N00DLES WILL SOON FEEL OUR WRATH!!!");
+	sleep(1900);
+	tprint("*** SINCE Y0U R 4 VALUED CUSTOM3R,");
+	tprint("*** U M4Y SET A CA$H RES3RVE AM0UNT.");
+	sleep(900);
+	tprint("*** TH1S WAYY YR ALWAYS HAVE $$$ IN YOUR 4CCT.");
+	sleep(500);
+
+	// ALLOW USER TO RESERVE SOME FUND$$ DURING PURCHASE AUTOMATIONS
+	var reservePrompt = prompt("Set your cash reserve amt: (INTEG3RS 0NLY PLX)", {type: "text"});
+	// PARSE PROMPT TEXT ENTRY TO AN INTEGER
+	var reserveAmount = parseFloat(reservePrompt);
+
+	// IF USER INPUTS TEXT, INPUT VALIDATION
+	// IF NOT A NUMBER, PURCHASE AT AMOUNT IS EQUAL TO COST
+	if (isNaN(reserveAmount) == true) {
+		var purchaseAtAmt = srvCost;
+	} else {
+		// ELSE PURCHASE AT AMOUNT IS RESERVE + COST
+		var purchaseAtAmt = reserveAmount + srvCost;
+	}
+
+	// POST CONFIRMATION OF INPUT ENTRY
+	tprint("*** $" + reserveAmount + " IS NOW UR R3SERV3 AMT");
+	sleep(1100);
+
+	// BEGIN PURCHASE SUMMARY DIALOGS
+	tprint("***");
+	tprint("*** ALR16HT. YOU WILL BE BUYING 25 (TWENTY 5)");
+	tprint("*** OF 0UR _null_EST QUAL1TY " + ram + "gb SERVERS");
+	sleep(500);
+	tprint("***");
+	tprint("*** FORE $" + srvCost + " PER 3ACH");
+	sleep(790);
+	tprint("***");
+	tprint("*** W/A CA$H m0n3y RESERVE AMOUNT OF $" + reserveAmount);
+	sleep(1175);
+	tprint("***");
+	tprint("*** s0.");
+	sleep(800);
+	tprint("*** u W1lL N3ED $" + purchaseAtAmt + " IN YOUR ACCT");
+	tprint("*** 84 A SERVER IS PURCHASED");
+	sleep(1337);
+	tprint("***");
+	tprint("*** 1f U 4R3 RDY WE CAN PROCEED.");
+	sleep(888);
+
+	// *** FINAL CONFIRMATION CHECK BEFORE PROCESSING BATCH SCRIPT
+	var continueCheck2 = prompt("SHALL WE PROC33D?", {type: "boolean"});
+}
+
+// DIALOG IF USER CANCELS
+if (continueCheck2 == false) {
+	tprint("*** KBY");
+	tprint("(The AI has left the chat.)");
+} 
+
+// FINAL DIALOGS AFTER USER CONFIRMS
+if (continueCheck2 == true) {
+	tprint("***");
+	tprint("*** l3sg00000..........");
+	sleep(1441);
+	tprint("***");
+	
+	// THE PROCESS REFERENCED HERE IS NOT REAL I PROMISE
+	tprint("*** SERVERACQUISIT10NNOTAHACK.EXE COMMENC1N6.....");
+
+	// THIS ONE IS THE REAL MAGIC. 
+	// I RUN MY BUY SCRIPT FROM HOME, 1 THREAD
+	// PASSING IT THE ram AND purchaseAtAmt parameters
+	exec("buy.script", "home", 1, ram, purchaseAtAmt);
+
+	// LAST HUZZAH DIALOGS
+	tprint("***");
+	sleep(1337);
+	tprint("***");
+	tprint("*** SRY N0 REFUND$");
+	tprint("***");
+	sleep(1337);
+	tprint("*** HAVE A _file not found_ DAY");
+	tprint("*** WATCH FOR SERVER PURCHASE NOTIFICATIONS >>>");
+	sleep(1337);
+	tprint("***");
+	tprint("(The AI has left the chat.)");
+}
