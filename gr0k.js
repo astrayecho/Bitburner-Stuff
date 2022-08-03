@@ -50,7 +50,7 @@ export async function main(ns) {
 	ns.tprint("*** SERVER USED/TOTAL RAM: " + serverusedram + "/" + serverram + "gb");
 	ns.tprint("*** ");
 	ns.tprint("***************************************");
-	ns.tprint("*** SERVER MONEY AVAILABLE: $" + moneyAvailable);
+	ns.tprint("*** SERVER MONEY AVAILABLE: $" + moneyAvailable.toFixed(0));
 	ns.tprint("*** SERVER MAX MONEY: $" + maxmoney);
 	ns.tprint("***************************************");
 	ns.tprint("*** ");
