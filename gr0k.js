@@ -30,6 +30,7 @@ export async function main(ns) {
 	var myhacklevel = ns.getHackingLevel();
 	var srvhacklevel = ns.getServerRequiredHackingLevel(target);
 	var serverseclevel = ns.getServerSecurityLevel(target);
+	var serverminlevel = ns.getServerMinSecurityLevel(target);
 	var serverram = ns.getServerMaxRam(target);
 	var serverusedram = ns.getServerUsedRam(target);
 
@@ -56,7 +57,9 @@ export async function main(ns) {
 	ns.tprint("*** ");
 	ns.tprint("*** SERVER'S REQUIRED HACKING LEVEL IS: " + srvhacklevel);
 	ns.tprint("*** MY HACKING LEVEL IS CURRENTLY " + myhacklevel);
+	ns.tprint("*** ");
 	ns.tprint("*** CURRENT SECURITY LEVEL: " + serverseclevel.toFixed(2));
+	ns.tprint("*** MINIMUM SECURITY LEVEL: " + serverminlevel);
 	ns.tprint("*** ");
 
     // HGW TIME CALCULATIONS ARE ALREADY FACTORED INTO MINUTES ABOVE
