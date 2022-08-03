@@ -56,10 +56,9 @@ export async function main(ns) {
 	ns.tprint("*** ");
 	ns.tprint("*** SERVER'S REQUIRED HACKING LEVEL IS: " + srvhacklevel);
 	ns.tprint("*** MY HACKING LEVEL IS CURRENTLY " + myhacklevel);
-	
-	ns.tprint("*** CURRENT SECURITY LEVEL: " + serverseclevel);
+	ns.tprint("*** CURRENT SECURITY LEVEL: " + serverseclevel.toFixed(2));
 	ns.tprint("*** ");
-    
+
     // HGW TIME CALCULATIONS ARE ALREADY FACTORED INTO MINUTES ABOVE
     // THE ".toFixed(2)" HERE TRUNCATES IT TO 2 DECIMAL PLACES
 	ns.tprint("*** CURRENT HACK TIME: " + h2.toFixed(2) + " minutes");
