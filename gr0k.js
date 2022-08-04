@@ -25,7 +25,8 @@ export async function main(ns) {
 	var wtime = ns.getWeakenTime(target);
 	var w2 = Math.round(wtime) / 1000 / 60;
 
-	var moneyAvailable = ns.getServerMoneyAvailable(target);
+	// var moneyAvailable = ns.getServerMoneyAvailable(target);
+	var moneyAvailable = ns.getServerMoneyAvailable(target).toLocaleString('en-US');
 	var maxmoney = ns.getServerMaxMoney(target);
 	var myhacklevel = ns.getHackingLevel();
 	var srvhacklevel = ns.getServerRequiredHackingLevel(target);
@@ -35,7 +36,7 @@ export async function main(ns) {
 	var serverusedram = ns.getServerUsedRam(target);
 
 	// BEGIN THE DIALOGS PRINTING TO TERMINAL
-    ns.tprint("*** ");
+    ns.tprint("***************************************");
 	ns.tprint("***************************************");
 	ns.tprint("***** SERVER INFO FOR " + target + " *****");
     
@@ -51,8 +52,8 @@ export async function main(ns) {
 	ns.tprint("*** SERVER USED/TOTAL RAM: " + serverusedram + "/" + serverram + "gb");
 	ns.tprint("*** ");
 	ns.tprint("***************************************");
-	ns.tprint("*** SERVER MONEY AVAILABLE: $" + moneyAvailable.toFixed(0));
-	ns.tprint("*** SERVER MAX MONEY: $" + maxmoney);
+	ns.tprint("*** SERVER MONEY AVAILABLE: $" + moneyAvailable);
+	ns.tprint("*** SERVER MAX MONEY: $" + maxmoney.toLocaleString('en-US'));
 	ns.tprint("***************************************");
 	ns.tprint("*** ");
 	ns.tprint("*** SERVER'S REQUIRED HACKING LEVEL IS: " + srvhacklevel);
@@ -67,6 +68,6 @@ export async function main(ns) {
 	ns.tprint("*** CURRENT HACK TIME: " + h2.toFixed(2) + " minutes");
 	ns.tprint("*** CURRENT GROW TIME: " + g2.toFixed(2) + " minutes");
 	ns.tprint("*** CURRENT WEAKEN TIME: " + w2.toFixed(2) + " minutes");
-
-	ns.tprint("*** ");
+	ns.tprint("***************************************");
+	ns.tprint("***************************************");
 }
