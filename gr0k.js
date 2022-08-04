@@ -1,16 +1,20 @@
 // *** MADE FOR THE GAME BITBURNER ***
-// THIS IS A BASIC INFO PAGE FOR USE WHEN YOU
-// WANT TO SEE MORE INFO ABOUT A SERVER WITHOUT
-// HAVING TO CONNECT TO IT FIRST
+// THIS IS A BASIC INFO PAGE FOR USE WHEN YOU WANT MORE
+// INFO ABOUT A SERVER WITHOUT HAVING TO CONNECT TO IT FIRST
 
 // USAGE: run gr0k.js HOST
 // EXAMPLE: run gr0k.js n00dles
 // THIS PRINTS AN INFOPAGE TO THE TERMINAL DISPLAYING
 // UPDATED RAM, SECURITY, HGW PROCESS TIMES AND SO ON
 
-// COPY/PASTE THE FOLLOWING TO YOUR TERMINAL FOR EASY
-// ACCESS, YOU CAN JUST TYPE "gr0k n00dles" THIS WAY
+// NEW! CONNECT PATH USAGE: run gr0k.js HOST c
+// EXAMPLE 2: run gr0k.js n00dles c
+// THIS PRINTS THE SAME INFO PAGE BUT WITH A COPY/PASTE-ABLE
+// CONNECT PATH TO A SERVER - THANKS TO REDDIT USER u/Vorthod
+
+// COPY/PASTE THE FOLLOWING TO YOUR TERMINAL FOR EASY ACCESS:
 // alias gr0k="run gr0k.js"
+// YOU CAN JUST TYPE "gr0k n00dles" or "gr0k n00dles c" THIS WAY
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -42,32 +46,87 @@ export async function main(ns) {
     
     // CODE TO ALERT YOU IF YOU'RE UNABLE TO HACK IT YET
 	if (myhacklevel < srvhacklevel){
-		ns.tprint("*** ");
 		ns.tprint("*** _>_>_>_CAN_!_NOT_!_h4CK_!_!_!_ ***");
-		ns.tprint("*** ");
 	}
 
 	ns.tprint("***************************************");
-	ns.tprint("*** ");
 	ns.tprint("*** SERVER USED/TOTAL RAM: " + serverusedram + "/" + serverram + "gb");
-	ns.tprint("*** ");
 	ns.tprint("***************************************");
 	ns.tprint("*** SERVER MONEY AVAILABLE: $" + moneyAvailable);
 	ns.tprint("*** SERVER MAX MONEY: $" + maxmoney.toLocaleString('en-US'));
 	ns.tprint("***************************************");
-	ns.tprint("*** ");
-	ns.tprint("*** SERVER'S REQUIRED HACKING LEVEL IS: " + srvhacklevel);
-	ns.tprint("*** MY HACKING LEVEL IS CURRENTLY " + myhacklevel);
-	ns.tprint("*** ");
-	ns.tprint("*** CURRENT SECURITY LEVEL: " + serverseclevel.toFixed(2));
-	ns.tprint("*** MINIMUM SECURITY LEVEL: " + serverminlevel);
-	ns.tprint("*** ");
-
+	ns.tprint("*** REQ. HACK LVL: " + srvhacklevel + " MY LVL: " + myhacklevel);
+	ns.tprint("*** CURRENT SEC. LVL: " + serverseclevel.toFixed(2) + " MIN LVL: " + serverminlevel);
+	ns.tprint("*** CURRENT HACK/GROW/WEAKEN TIMES:");
     // HGW TIME CALCULATIONS ARE ALREADY FACTORED INTO MINUTES ABOVE
     // THE ".toFixed(2)" HERE TRUNCATES IT TO 2 DECIMAL PLACES
-	ns.tprint("*** CURRENT HACK TIME: " + h2.toFixed(2) + " minutes");
-	ns.tprint("*** CURRENT GROW TIME: " + g2.toFixed(2) + " minutes");
-	ns.tprint("*** CURRENT WEAKEN TIME: " + w2.toFixed(2) + " minutes");
+	ns.tprint("*** H: " + h2.toFixed(1) + " mins G: " + g2.toFixed(1) + " mins W: " + w2.toFixed(1) + " mins");
 	ns.tprint("***************************************");
 	ns.tprint("***************************************");
+
+	if (ns.args[1] == "c") {
+		ns.tprint("*** CONNECT PATH TO SERVER: ");
+		ns.tprint(connectCommandToServer(findPathToServer(ns, "home", ns.args[0])));
+	} else {
+		ns.tprint("*** FOR CONNECT PATH, USE:");
+		ns.tprint("*** gr0k " + target + " c");
+		ns.tprint("*** OR: run gr0k.js " + target + " c");
+		ns.tprint("***************************************");
+	}
+}
+
+/**
+ * CONNECT PATH FUNCTIONALITY ADDED WITH MANY THANKS TO REDDIT USER u/Vorthod
+ * returns an array containing all servers between currentServer and the target
+ */
+export function findPathToServer(ns, currentServer, target, previousServer) {
+ 
+    //if we were asked to find the server we're currently on, we're done. 
+    //Return an array with just that.
+    if (currentServer == target) {
+        return [currentServer];
+    }
+ 
+    //otherwise, see if the target is connected to one of our neighbors
+    let neighbors = ns.scan(currentServer);
+    for (var i = 0; i < neighbors.length; i++) {
+        var neighbor = neighbors[i];
+ 
+        //ignore any server we just visited, we don't want to go backwards
+        //I don't think scan returns currentServer, but in case it does, treat it the same as the previous server
+        if (neighbor == previousServer || neighbor == currentServer) {
+            continue;
+        }
+ 
+        //recursively call findserver using neighbor as our new currentServer (and currentServer is our new previousServer)
+        //Basically, check if our target is down this path
+        let findResult = findPathToServer(ns, neighbor, target, currentServer);
+ 
+        //if we got an actual answer back, create an array starting at currentServer followed by the findResult(s)
+        //This will collapse the recursion into an array of all connections from home to target
+        if (findResult != null) {
+            var newResult = [currentServer].concat(findResult)
+            return newResult;
+        }
+ 
+    }
+ 
+    //If we get here, we didn't find our target connected to any of these neighbors. 
+    //The target must've been down a different branch
+    return null;
+}
+ 
+/**
+ * Given an array of servers, make a copy-pasteable command that will chain terminal "connect" commands from first to last.
+ * Useful for making things like commands that can take you from home to CSEC (and other faction-related servers).
+ */
+export function connectCommandToServer(pathArray) {
+    var connectCommand = "";
+    for (var i = 0; i < pathArray.length; i++) {
+        if (pathArray[i] != "home") {
+            connectCommand += "connect "
+        }
+        connectCommand += pathArray[i] + ";"
+    }
+    return connectCommand;
 }
