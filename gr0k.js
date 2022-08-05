@@ -14,7 +14,7 @@
 
 // COPY/PASTE THE FOLLOWING TO YOUR TERMINAL FOR EASY ACCESS:
 // alias gr0k="run gr0k.js"
-// YOU CAN JUST TYPE "gr0k n00dles" or "gr0k n00dles c" THIS WAY
+// THIS WAY YOU CAN JUST TYPE "gr0k n00dles" or "gr0k n00dles c"
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -38,11 +38,11 @@ export async function main(ns) {
 	var serverminlevel = ns.getServerMinSecurityLevel(target);
 	var serverram = ns.getServerMaxRam(target);
 	var serverusedram = ns.getServerUsedRam(target);
+	var hackingchance = ns.hackAnalyzeChance(target) * 100;
 
 	// BEGIN THE DIALOGS PRINTING TO TERMINAL
-    ns.tprint("***************************************");
 	ns.tprint("***************************************");
-	ns.tprint("***** SERVER INFO FOR " + target + " *****");
+	ns.tprint("*** SERVER INFO FOR " + target);
     
     // CODE TO ALERT YOU IF YOU'RE UNABLE TO HACK IT YET
 	if (myhacklevel < srvhacklevel){
@@ -52,24 +52,23 @@ export async function main(ns) {
 	ns.tprint("***************************************");
 	ns.tprint("*** SERVER USED/TOTAL RAM: " + serverusedram + "/" + serverram + "gb");
 	ns.tprint("***************************************");
-	ns.tprint("*** SERVER MONEY AVAILABLE: $" + moneyAvailable);
-	ns.tprint("*** SERVER MAX MONEY: $" + maxmoney.toLocaleString('en-US'));
+	ns.tprint("*** MONEY AVAIL.: $" + moneyAvailable);
+	ns.tprint("*** MAX: $" + maxmoney.toLocaleString('en-US'));
 	ns.tprint("***************************************");
-	ns.tprint("*** REQ. HACK LVL: " + srvhacklevel + " MY LVL: " + myhacklevel);
-	ns.tprint("*** CURRENT SEC. LVL: " + serverseclevel.toFixed(2) + " MIN LVL: " + serverminlevel);
-	ns.tprint("*** CURRENT HACK/GROW/WEAKEN TIMES:");
+	ns.tprint("*** HACK LVL/MY LVL: " + srvhacklevel + " | " + myhacklevel);
+	ns.tprint("*** SECURITY LVL/MIN: " + serverseclevel.toFixed(2) + "/" + serverminlevel);
+	ns.tprint("*** HACK CHANCE: " + hackingchance.toFixed(0) + "% H/G/W TIMES:");
     // HGW TIME CALCULATIONS ARE ALREADY FACTORED INTO MINUTES ABOVE
     // THE ".toFixed(2)" HERE TRUNCATES IT TO 2 DECIMAL PLACES
-	ns.tprint("*** H: " + h2.toFixed(1) + " mins G: " + g2.toFixed(1) + " mins W: " + w2.toFixed(1) + " mins");
+	ns.tprint("*** H: " + h2.toFixed(1) + "mins G: " + g2.toFixed(1) + "mins W: " + w2.toFixed(1) + "mins");
 	ns.tprint("***************************************");
 	ns.tprint("***************************************");
 
 	if (ns.args[1] == "c") {
-		ns.tprint("*** CONNECT PATH TO SERVER: ");
+		ns.tprint("CONNECT PATH (Copy/paste to terminal): ");
 		ns.tprint(connectCommandToServer(findPathToServer(ns, "home", ns.args[0])));
 	} else {
-		ns.tprint("*** FOR CONNECT PATH, USE:");
-		ns.tprint("*** gr0k " + target + " c");
+		ns.tprint("*** CONNECT PATH: gr0k " + target + " c");
 		ns.tprint("*** OR: run gr0k.js " + target + " c");
 		ns.tprint("***************************************");
 	}
