@@ -9,13 +9,17 @@
 // THE PHASE 1/2 SCRIPTS, BUT YOU CAN CALL IT MANUALLY WITH
 // THE USAGE EXAMPLE BELOW.
 
-// USAGE: run phase3.js TARGET HOST
-// EXAMPLE: run phase3.js n00dles home
-// EXAMPLE SHOWN WILL TARGET n00dles FROM THE HOME SERVER
+// USAGE: run phase3.js TARGET HOST PORTNUMBER
+// EXAMPLE: run phase3.js n00dles home 1
+// EXAMPLE SHOWN WILL TARGET n00dles FROM THE home SERVER 
+// AND BROADCAST PHASE TRANSITIONS ON PORT 1
 
 export async function main(ns) {
 	var target = ns.args[0]; 
 	var hostName = ns.args[1];
+
+	// Port number to use to signal phase transition
+	var portNumber = ns.args[2];
 
 	// Player hack chance/growth multipliers
 	const {chance, growth} = ns.getHackingMultipliers();
@@ -32,19 +36,19 @@ export async function main(ns) {
 	var weakenTime = ns.getWeakenTime(target) / 1000;
 
 	// Target server variables
-	var curMoney = ns.getServerMoneyAvailable(target) / 1000; // Current $ available on target server in thousands
+	var curMoney = Math.floor(ns.getServerMoneyAvailable(target) / 1000); // Current $ available on target server in thousands
 	var maxMoney = ns.getServerMaxMoney(target) / 1000; // Maximum $ for target server in thousands
 	var money15 = maxMoney * 0.15; // 15% of max money, a rough target for staying at/above 85% in funds
 
 	// Hack variables
-	var hackAmount = ns.hackAnalyze(target); // % of server money hacked per thread
-	var hack15Threads = Math.floor(15 / hackAmount); // # of threads needed to hack 15% of server money
+	var hackAmount = ns.hackAnalyze(target) * 100; // % of server money hacked per thread
+	var hack15Threads = Math.floor(15 / hackAmount) + 1; // # of threads needed to hack 15% of server money
 	var hack15Impact = hack15Threads * 0.002; // Security impact of running (hack() x hack15Threads)
 	var hack15Time = hackTime * hack15Threads / 60; // Time in minutes to run it all
 
 	// Grow variables
 	var growthParameter = ns.getServerGrowth(target); // Target's growth parameter. Higher = better.
-	var grow15Threads = Math.floor(ns.growthAnalyze(target, 1.15)); // # of threads to grow back 15%
+	var grow15Threads = Math.floor(ns.growthAnalyze(target, 1.18015) + 1); // # of threads to grow back 15%
 	var grow15Impact = grow15Threads * 0.004; // Security lvl impact of running (grow() x grow15Threads)
 	var grow15Time = (grow15Threads * growTime) / 60; // Time in minutes to complete grow threads 
 	
@@ -57,10 +61,10 @@ export async function main(ns) {
 
 	ns.print("Target: " + target + " 15% of target: " + (money15 / 1000) + "k");
 	ns.print("Current/Max $$: " + curMoney.toLocaleString('en-us') + "k/" + maxMoney.toLocaleString('en-us') + "k");
-	ns.print("Player hack chance multiplier: " + chance.toFixed(2));
-	ns.print("Player growth multiplier: " + growth.toFixed(2));
+	ns.print("Player hack chance multiplier: " + chance.toFixed(4));
+	ns.print("Player growth multiplier: " + growth.toFixed(4));
 	ns.print("H/G/W Times (seconds): H " + hackTime.toFixed(0) + "/G " + growTime.toFixed(0) + "/W " + weakenTime.toFixed(0));
-	ns.print("Hack% per thread: " + hackAmount.toFixed(2) + " Threads to 15%: " + hack15Threads);
+	ns.print("Hack% per thread: " + hackAmount.toFixed(2) + "% Threads to 15%: " + hack15Threads);
 	ns.print("Security Impact: " + hack15Impact.toFixed(3) + " Weakens needed: " + weaken15Threads);
 	ns.print("Growth parameter: " + growthParameter + " Threads to 15%: " + grow15Threads);
 	ns.print("Times to H/G/W 15% of this server: ");
@@ -77,6 +81,7 @@ export async function main(ns) {
 	while (hack15Threads > hackThreadsRun) {
 		// First come vars
 		var hackThreadsRemaining = hack15Threads - hackThreadsRun;
+		var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName); // Available RAM
 
 		// Adding hack/weaken together below since they go hand in hand
 		// For 10x and 20x hack threads, < 1 weaken thread is needed
@@ -132,6 +137,15 @@ export async function main(ns) {
 		}
 		// best keep this just in case!
 		await sleep(111);
+	}
+
+	// Finally, kick it back to phase 2 to reset...
+	if (hackThreadsRun == hack15Threads) {
+			ns.print("* Hack threads run: " + hackThreadsRun);
+			ns.print("* Returning to phase 2, stand by...");
+			await ns.writePort(portNumber, 2);
+			await ns.sleep(333);
+			ns.print("Thanks for playing.");
 	}
 
 

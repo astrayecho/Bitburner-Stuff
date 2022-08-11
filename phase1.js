@@ -5,8 +5,8 @@
 // THEN CALCULATING AND RUNNING CONCURRENT WEAKENS UNTIL THE
 // TARGET IS AT ITS MINIMUM SECURITY LEVEL.
 
-// USAGE: run phase1.js TARGET HOST Optional:PHASEHOST(bool)
-// EXAMPLE 1: run phase1.js n00dles home
+// USAGE: run phase1.js TARGET HOST PORT Optional:PHASEHOST(bool)
+// EXAMPLE 1: run phase1.js n00dles home 1
 // EXAMPLE SHOWN WILL TARGET n00dles FROM THE HOME SERVER
 // WHILE RUNNING THE PHASE 1/2/3 PROCESSES FROM WHICHEVER
 // SERVER THIS WAS ORIGINALLY CALLED FROM. 
@@ -19,7 +19,8 @@
 export async function main(ns) {
 	var target = ns.args[0];
 	var hostName = ns.args[1];
-    var selfHosted = ns.args[2]; // To host the Phase 1/2/3 processes on the host server as well
+    var portNumber = ns.args[2];
+    var selfHosted = ns.args[3]; // To host the Phase 1/2/3 processes on the host server as well
 	var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName);
 	var serverArray = [target, hostName];
 	ns.disableLog("sleep","exit");
@@ -103,8 +104,42 @@ export async function main(ns) {
         // ns.exit();
         await ns.sleep(111);
     }
-    ns.print("*** Security difference is now: " + securityDifference.toFixed(2));
+    ns.print("*** Security level is now: " + ns.getServerSecurityLevel(target));
     ns.print("*** Executing phase 2 on " + hostName + " against " + target);
-    ns.run("phase2.js", 1, target, runningThreads);
+    ns.exec("phase2.js", hostName, 1, target, hostName, portNumber);
     ns.print("*** Completed.");
+
+    // BEGIN COMMANDER MODE CODE
+    // THIS WILL LISTEN TO A PORT SPECIFIED TO COMMAND THE PHASE 2 AND 3 SCRIPTS TO FIRE
+
+    // Simple iterator just for kicks
+    var i = 1;
+
+    while (true) {
+        // LISTENER SCRIPT GOOOOOO....
+        let signal = ns.readPort(portNumber);
+        ns.clearLog();
+        ns.print("Current signal: " + signal);
+        ns.print("Loop #: " + i);
+
+        if (signal == "NULL PORT DATA") {
+            // pick your nose
+            await ns.sleep(379);
+            continue;
+        } 
+        if (signal == 3) {
+            ns.run("phase3.js", 1, target, hostName, portNumber);
+            ++i;
+            await ns.sleep(379);
+            continue;
+        }
+        if (signal == 2) {
+            ns.run("phase2.js", 1, target, hostName, portNumber);
+            ++i;
+            await ns.sleep(359);
+        } else {
+            await ns.sleep(379);
+            continue;
+        }
+    }
 }
