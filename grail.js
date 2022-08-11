@@ -32,11 +32,11 @@ export async function main(ns) {
 	while (true) {
 		// FOR HGW TIMES, THIS DIVIDES BY 1000 TO GET SECONDS
 		// THEN AGAIN BY 60 TO GET THE TIME IN MINUTES
-		var htime = ns.getHackTime(target);
+		var htime = ns.tFormat(ns.getHackTime(target), "00:00")
 		var h2 = Math.round(htime) / 1000 / 60;
-		var gtime = ns.getGrowTime(target);
+		var gtime = ns.tFormat(ns.getGrowTime(target),"00:00")
 		var g2 = Math.round(gtime) / 1000 / 60;
-		var wtime = ns.getWeakenTime(target);
+		var wtime = ns.tFormat(ns.getWeakenTime(target),"00:00")
 		var w2 = Math.round(wtime) / 1000 / 60;
 
 		// $$ FORMATTING IS WEIRD STILL, I MAY FIND A FIX LATER
@@ -88,7 +88,7 @@ export async function main(ns) {
 		// THE ".toFixed(2)" HERE TRUNCATES IT TO 2 DECIMAL PLACES
 		ns.print("*****************************************");
 		ns.print("* HACK/GROW/WEAKEN TIMES: ");
-		ns.print("* H: " + h2.toFixed(1) + "mins G: " + g2.toFixed(1) + "mins W: " + w2.toFixed(1) + "mins");
+		ns.print(` H:${htime} G:${gtime} W:${wtime} `);
 		ns.print("*****************************************");
 		
 		// YOU CAN MOVE ns.tail OUTSIDE OF THE WHILE LOOP SO IT DOESN'T RESPAWN,
