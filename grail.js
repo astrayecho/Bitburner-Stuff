@@ -40,9 +40,9 @@ export async function main(ns) {
 		var w2 = Math.round(wtime) / 1000 / 60;
 
 		// $$ FORMATTING IS WEIRD STILL, I MAY FIND A FIX LATER
-		var moneyAvailable = ns.getServerMoneyAvailable(target) / 1000;
-		var formattedMoney = moneyAvailable.toFixed(0);
-		var maxmoney = ns.getServerMaxMoney(target) / 1000;
+		var moneyAvailable = ns.getServerMoneyAvailable(target);
+		var formattedMoney = ns.nFormat(moneyAvailable,"0.00a")
+		var maxmoney = ns.nFormat(ns.getServerMaxMoney(target), "0.00a")
 
 		// BASICALLY MAKING VARS FOR ALL INFO TO BE ABLE TO
 		// .print IT WITH FORMATTING/WITHOUT GETTING ERRORS
@@ -78,7 +78,7 @@ export async function main(ns) {
 		ns.print("*****************************************");
 		ns.print("* SERVER USED/TOTAL RAM: " + serverusedram.toFixed(1) + "/" + serverram + "gb");
 		ns.print("*****************************************");
-		ns.print("* $ AVAIL/MAX: $" + formattedMoney + "k/" + maxmoney.toLocaleString('en-US') + "k");
+		ns.print("* $ AVAIL/MAX: $" + formattedMoney + "/" + maxmoney);
 		ns.print("*****************************************");
 		ns.print("* HACK LVL/MY LVL: " + srvhacklevel + "/" + myhacklevel);
 		ns.print("* SECURITY LVL/MIN: " + serverseclevel.toFixed(2) + "/" + serverminlevel);
