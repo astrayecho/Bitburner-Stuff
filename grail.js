@@ -30,30 +30,26 @@ export async function main(ns) {
 	ns.disableLog("sleep");
 	
 	while (true) {
-		// FOR HGW TIMES, THIS DIVIDES BY 1000 TO GET SECONDS
-		// THEN AGAIN BY 60 TO GET THE TIME IN MINUTES
-		var htime = ns.tFormat(ns.getHackTime(target), "00:00")
-		var h2 = Math.round(htime) / 1000 / 60;
-		var gtime = ns.tFormat(ns.getGrowTime(target),"00:00")
-		var g2 = Math.round(gtime) / 1000 / 60;
-		var wtime = ns.tFormat(ns.getWeakenTime(target),"00:00")
-		var w2 = Math.round(wtime) / 1000 / 60;
+		// Thanks to @saynt-garmo on github for formatting help!
+		var htime = ns.getHackTime(target) / 1000; // hack time
+		var h2 = ns.nFormat(htime, '00:00'); // formatted hack time
+		var gtime = ns.getGrowTime(target) / 1000; // grow time
+		var g2 = ns.nFormat(gtime, '00:00');
+		var wtime = ns.getWeakenTime(target) / 1000; // weaken time
+		var w2 = ns.nFormat(wtime, '00:00');
+		var moneyAvailable = ns.nFormat(ns.getServerMoneyAvailable(target),"0.00a"); // current $$ available
+		var maxmoney = ns.nFormat(ns.getServerMaxMoney(target), "0.00a"); // maximum $$ possible
 
-		// $$ FORMATTING IS WEIRD STILL, I MAY FIND A FIX LATER
-		var moneyAvailable = ns.getServerMoneyAvailable(target);
-		var formattedMoney = ns.nFormat(moneyAvailable,"0.00a")
-		var maxmoney = ns.nFormat(ns.getServerMaxMoney(target), "0.00a")
-
-		// BASICALLY MAKING VARS FOR ALL INFO TO BE ABLE TO
+		// BASICALLY MAKING VARS FOR ALL THE INFOS TO BE ABLE TO
 		// .print IT WITH FORMATTING/WITHOUT GETTING ERRORS
-		var myhacklevel = ns.getHackingLevel();
-		var srvhacklevel = ns.getServerRequiredHackingLevel(target);
-		var serverseclevel = ns.getServerSecurityLevel(target);
-		var serverminlevel = ns.getServerMinSecurityLevel(target);
-		var serverram = ns.getServerMaxRam(target);
-		var serverusedram = ns.getServerUsedRam(target);
-		var serverGrowth = ns.getServerGrowth(target);
-		var hackingchance = ns.hackAnalyzeChance(target) * 100;
+		var myhacklevel = ns.getHackingLevel(); // player's hacking level
+		var srvhacklevel = ns.getServerRequiredHackingLevel(target); // server hacking level requirement
+		var serverseclevel = ns.getServerSecurityLevel(target); // current server security level
+		var serverminlevel = ns.getServerMinSecurityLevel(target); // minimum server sec. level
+		var serverram = ns.getServerMaxRam(target); // server RAM
+		var serverusedram = ns.getServerUsedRam(target); // server's used RAM
+		var serverGrowth = ns.getServerGrowth(target); // the server's growth parameter, higher = better!
+		var hackingchance = ns.hackAnalyzeChance(target) * 100; // player's chance to hack the server
 		
 		// THIS CLEARS ALL THE LOGS THE ABOVE FUNCTIONS SPIT OUT
 		await ns.clearLog();
@@ -78,7 +74,7 @@ export async function main(ns) {
 		ns.print("*****************************************");
 		ns.print("* SERVER USED/TOTAL RAM: " + serverusedram.toFixed(1) + "/" + serverram + "gb");
 		ns.print("*****************************************");
-		ns.print("* $ AVAIL/MAX: $" + formattedMoney + "/" + maxmoney);
+		ns.print("* $ AVAIL/MAX: $" + moneyAvailable + "/" + maxmoney);
 		ns.print("*****************************************");
 		ns.print("* HACK LVL/MY LVL: " + srvhacklevel + "/" + myhacklevel);
 		ns.print("* SECURITY LVL/MIN: " + serverseclevel.toFixed(2) + "/" + serverminlevel);
@@ -88,13 +84,13 @@ export async function main(ns) {
 		// THE ".toFixed(2)" HERE TRUNCATES IT TO 2 DECIMAL PLACES
 		ns.print("*****************************************");
 		ns.print("* HACK/GROW/WEAKEN TIMES: ");
-		ns.print(` H:${htime} G:${gtime} W:${wtime} `);
+		ns.print("* H: " + h2 + " G: " + g2 + " W: " + w2);
 		ns.print("*****************************************");
 		
 		// YOU CAN MOVE ns.tail OUTSIDE OF THE WHILE LOOP SO IT DOESN'T RESPAWN,
 		// HOWEVER THIS IS A *FEATURE* SO YOU DON'T END UP WITH A BUNCH OF 
 		// THESE PROCESSES LEFT OPEN & EATING UP RAM IN THE BACKGROUND
-		await ns.tail("grail.js", "home", target);
+		await ns.tail();
 
 		// PAUSE BEFORE RESETTING
 		// YOU CAN CHANGE THE .sleep VALUE HERE BUT DON'T REMOVE IT
