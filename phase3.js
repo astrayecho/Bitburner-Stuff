@@ -57,7 +57,7 @@ export async function main(ns) {
 	var weaken15Time = (weaken15Threads * weakenTime) / 60;  // Time in minutes to complete weaken threads
 
 	ns.clearLog();
-	ns.tail();
+	// ns.tail();
 
 	ns.print("Target: " + target + " 15% of target: " + (money15 / 1000) + "k");
 	ns.print("Current/Max $$: " + curMoney.toLocaleString('en-us') + "k/" + maxMoney.toLocaleString('en-us') + "k");
@@ -75,10 +75,7 @@ export async function main(ns) {
 	// this will be incremented in the if loops below...
 	var hackThreadsRun = 0;
 
-	// run a grail thread while this bit's going so we can see the money roll in
-	ns.run("grail.js", 1, target);
-
-	while (hack15Threads > hackThreadsRun) {
+	while (hackThreadsRun < hack15Threads) {
 		// First come vars
 		var hackThreadsRemaining = hack15Threads - hackThreadsRun;
 		var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName); // Available RAM
@@ -97,56 +94,67 @@ export async function main(ns) {
             ns.exec("1xhack.js", hostName, 50, target, rt50);
 			ns.exec("1xweak.js", hostName, 1, target, rt50);
             var hackThreadsRun = rt50;
-            await ns.sleep(45);
+            await ns.sleep(55);
 			continue;
-        } else {
-			// take a breather
-			await ns.sleep(15);
-		}
+        } 
 		if (hackThreadsRemaining >= 20 && hostRAM > hackRAMx20) {
             var rt20 = hackThreadsRun + 20;
             ns.exec("1xhack.js", hostName, 20, target, rt20);
 			ns.exec("1xweak.js", hostName, 1, target, rt20);
             var hackThreadsRun = rt20;
-            await ns.sleep(45);
+            await ns.sleep(55);
 			continue;
-        } else {
-			// take a breather
-			await ns.sleep(15);
-		}
+        } 
 		if (hackThreadsRemaining >= 10 && hostRAM > hackRAMx10) {
             var rt10 = hackThreadsRun + 10;
             ns.exec("1xhack.js", hostName, 10, target, rt10);
 			ns.exec("1xweak.js", hostName, 1, target, rt10);
             var hackThreadsRun = rt10;
-            await ns.sleep(45);
+            await ns.sleep(55);
 			continue;
-        } else {
-			// take a breather
-			await ns.sleep(15);
-		}
+        } 
         if (hackThreadsRemaining < 10 && hackThreadsRemaining > 0 && hostRAM > hackRAMx1) {
             var rt1 = hackThreadsRun + 1;
             ns.exec("1xhack.js", hostName, 1, target, rt1);
             var hackThreadsRun = rt1;
-            await ns.sleep(45);
+            await ns.sleep(55);
 			continue;
         } else {
 			// take a breather
-			await ns.sleep(555);
+			await ns.sleep(255);
 		}
 		// best keep this just in case!
-		await sleep(111);
+		await ns.sleep(111);
+		continue;
 	}
 
-	// Finally, kick it back to phase 2 to reset...
-	if (hackThreadsRun == hack15Threads) {
-			ns.print("* Hack threads run: " + hackThreadsRun);
-			ns.print("* Returning to phase 2, stand by...");
-			await ns.writePort(portNumber, 2);
-			await ns.sleep(333);
-			ns.print("Thanks for playing.");
+	var delayed = false;
+	var postSetup = false;
+	
+	while (postSetup == false) {
+		// Wind down with a delay before pushing it back to phase 2
+		if (hackThreadsRun == hack15Threads) {
+			var finishDelay = weakenTime;
+			await ns.writePort(portNumber, "P3 Finishing 0%");
+			await ns.sleep(finishDelay / 3);
+			await ns.writePort(portNumber, "P3 Finishing 33%");
+			await ns.sleep(finishDelay / 3);
+			await ns.writePort(portNumber, "P3 Finishing 67%");
+			await ns.sleep((finishDelay / 3) + 100); // Add an extra second for safety
+			var delayed = true;
+			postSetup = true;
+		}
 	}
-
+	// Now we can wrap up and sent to phase 2
+	if (delayed == true) {
+		ns.print("* Hack threads run: " + hackThreadsRun);
+		ns.print("* Returning to phase 2, stand by...");
+		await ns.sleep(151);
+		await ns.writePort(portNumber, 2);
+		ns.print("Thanks for playing.");
+		await ns.sleep(133);
+		await ns.exit();
+		// ns.closeTail();
+	}
 
 }

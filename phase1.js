@@ -6,15 +6,15 @@
 // TARGET IS AT ITS MINIMUM SECURITY LEVEL.
 
 // USAGE: run phase1.js TARGET HOST PORT Optional:PHASEHOST(bool)
-// EXAMPLE 1: run phase1.js n00dles home 1
+// EXAMPLE 1: "run phase1.js n00dles home 1"
 // EXAMPLE SHOWN WILL TARGET n00dles FROM THE HOME SERVER
 // WHILE RUNNING THE PHASE 1/2/3 PROCESSES FROM WHICHEVER
 // SERVER THIS WAS ORIGINALLY CALLED FROM. 
 
-// EXAMPLE 2: run phase1.js n00dles psrv2048.01 true
+// EXAMPLE 2: "run phase1.js n00dles psrv2048.01 1 true"
 // EXAMPLE SHOWN WILL TARGET n00dles FROM THE psrv2048.01 
-// PURCHASED SERVER, AND HOST THE PHASE 1/2/3 PROCESSES ON
-// psrv2048.01 AS WELL.
+// PURCHASED SERVER, LISTEN ON PORT 1 FOR PHASE TRANSITION
+// SIGNALS, AND HOST THE PHASE PROCESSES ON psrv2048.01 TOO.
 
 export async function main(ns) {
 	var target = ns.args[0];
@@ -25,9 +25,12 @@ export async function main(ns) {
 	var serverArray = [target, hostName];
 	ns.disableLog("sleep","exit");
 	await ns.sleep(45);
+
+    // run a grail thread while this is going so we can see the money roll in
+	ns.run("grail.js", 1, target);
 	
 
-	// BEGIN SECURITY LEVEL WEAKENING
+	// BEGIN ROOT ACCESS VERIFICATION/PROCESSINGs
 	for (var i = 0; i < serverArray.length; ++i) {
         var tar = serverArray[i];
         ns.tprint("Processing root on: " + tar);
@@ -99,6 +102,12 @@ export async function main(ns) {
             var runningThreads = rt1;
             await ns.sleep(45);
         }
+        if (weakThreads == 0) {
+            // get weaken time
+            var wTime = ns.getWeakenTime(target);
+            ns.print("Awaiting script execution: " + ns.tFormat(wTime, "00:00"));
+            await ns.sleep(wTime);
+        }
         
 
         // ns.exit();
@@ -112,34 +121,52 @@ export async function main(ns) {
     // BEGIN COMMANDER MODE CODE
     // THIS WILL LISTEN TO A PORT SPECIFIED TO COMMAND THE PHASE 2 AND 3 SCRIPTS TO FIRE
 
-    // Simple iterator just for kicks
-    var i = 1;
+    var lastSignal = "(awaiting)";
+    var i = 1; // Iterator to count loop cycles
 
     while (true) {
-        // LISTENER SCRIPT GOOOOOO....
-        let signal = ns.readPort(portNumber);
-        ns.clearLog();
-        ns.print("Current signal: " + signal);
-        ns.print("Loop #: " + i);
+        var pauseCycle = false;
 
-        if (signal == "NULL PORT DATA") {
-            // pick your nose
-            await ns.sleep(379);
-            continue;
-        } 
-        if (signal == 3) {
-            ns.run("phase3.js", 1, target, hostName, portNumber);
-            ++i;
-            await ns.sleep(379);
-            continue;
+        while (pauseCycle == false) {
+            // LISTENER SCRIPT GOOOOOO....
+            let signal = ns.readPort(portNumber);
+            ns.disableLog("run");
+            ns.clearLog();
+            ns.print("Current signal: " + signal);
+            ns.print("Last signal: " + lastSignal);
+            ns.print("Port #: " + portNumber + " Loop #: " + i);
+
+            if (signal == 3) {
+                ns.run("phase3.js", 1, target, hostName, portNumber);
+                var lastSignal = "Activate Phase 3";
+                var pauseCycle = true;
+                await ns.sleep(11);
+                continue;
+            }
+            if (signal == 2) {
+                ns.run("phase2.js", 1, target, hostName, portNumber);
+                ++i;
+                var lastSignal = "Activate Phase 2";
+                var pauseCycle = true;
+                await ns.sleep(31);
+            }
+            if (signal == "NULL PORT DATA") {
+                // pick your nose
+                await ns.sleep(19);
+                continue;
+            } else {
+                var lastSignal = signal;
+                pauseCycle = true;
+                await ns.sleep(179);
+                continue;
+            }
         }
-        if (signal == 2) {
-            ns.run("phase2.js", 1, target, hostName, portNumber);
-            ++i;
-            await ns.sleep(359);
-        } else {
-            await ns.sleep(379);
-            continue;
+        while (pauseCycle == true) {
+            ns.print("*** ON 0.9 SECOND COOLDOWN ***");
+            await ns.sleep(901);
+            var pauseCycle = false;
         }
+        // sleep. always sleep.
+        await ns.sleep(31);
     }
 }
