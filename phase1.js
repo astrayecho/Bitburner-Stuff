@@ -1,172 +1,133 @@
 /** @param {NS} ns */
 // PHASE 1: THE WEAKENING
 // THIS PHASE FOCUSES ON SETTING THE STAGE FOR THE ACTUAL HGW
-// CYCLE, BY ROOTING HOST AND TARGET SERVERS IF NECESSARY,
-// THEN CALCULATING AND RUNNING CONCURRENT WEAKENS UNTIL THE
-// TARGET IS AT ITS MINIMUM SECURITY LEVEL.
+// CYCLE, BY WEAKENING THE TARGET SERVER.
 
-// USAGE: run phase1.js TARGET HOST PORT Optional:PHASEHOST(bool)
+// STANDARD USAGE: YOU SHOULDN'T HAVE TO CALL THIS FUNCTION, IT
+// GETS CALLED FROM THE commander.js PROCESS AND GETS PASSED THE
+// NECESSARY ARGUMENTS AUTOMAGICALLY. BUTTTTT... IN CASE YOU WANT
+// TO RUN IT MANUALLY GIVE THIS A GO:
+
+// USAGE: run phase1.js TARGET HOST PORTNUMBER(int 1-20)
 // EXAMPLE 1: "run phase1.js n00dles home 1"
-// EXAMPLE SHOWN WILL TARGET n00dles FROM THE HOME SERVER
-// WHILE RUNNING THE PHASE 1/2/3 PROCESSES FROM WHICHEVER
-// SERVER THIS WAS ORIGINALLY CALLED FROM. 
+// EXAMPLE SHOWN WILL TARGET n00dles FROM THE home SERVER AND
+// SEND STATUS UPDATES TO PORT #1. ONLY USE PORTS 1-20.
 
-// EXAMPLE 2: "run phase1.js n00dles psrv2048.01 1 true"
-// EXAMPLE SHOWN WILL TARGET n00dles FROM THE psrv2048.01 
-// PURCHASED SERVER, LISTEN ON PORT 1 FOR PHASE TRANSITION
-// SIGNALS, AND HOST THE PHASE PROCESSES ON psrv2048.01 TOO.
 
 export async function main(ns) {
-	var target = ns.args[0];
-	var hostName = ns.args[1];
+	// Receives these as arguments from the commander.js process
+    // or manually at run time
+    var target = ns.args[0]; 
+    var hostName = ns.args[1];
     var portNumber = ns.args[2];
-    var selfHosted = ns.args[3]; // To host the Phase 1/2/3 processes on the host server as well
-	var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName);
-	var serverArray = [target, hostName];
-	ns.disableLog("sleep","exit");
-	await ns.sleep(45);
 
-    // run a grail thread while this is going so we can see the money roll in
-	ns.run("grail.js", 1, target);
-	
-
-	// BEGIN ROOT ACCESS VERIFICATION/PROCESSINGs
-	for (var i = 0; i < serverArray.length; ++i) {
-        var tar = serverArray[i];
-        ns.tprint("Processing root on: " + tar);
-
-        if (ns.hasRootAccess(target) == false) {
-            if (ns.fileExists("BruteSSH.exe", "home")) {
-                ns.brutessh(tar);
-            }
-            if (ns.fileExists("FTPCrack.exe", "home")) {
-                ns.ftpcrack(tar);
-            }
-            if (ns.fileExists("HTTPWorm.exe", "home")) {
-                ns.httpworm(tar);
-            }
-            if (ns.fileExists("SQLInject.exe", "home")) {
-                ns.sqlinject(tar);
-            }
-            if (ns.fileExists("relaySMTP.exe", "home")) {
-                ns.relaysmtp(tar);
-            }
-            // NUKE IT
-            ns.nuke(tar);
-        }
-    }
-
-    // 
-    if (hostName != "home") {
-            if (selfHosted == true) {
-            // Include phase 1/2/3 files in fileBox to send to host server
-            var fileBox = ["1xhack.js","1xweak.js","1xgrow.js","phase1.js","phase2.js","phase3.js"];
-            await ns.scp(fileBox, hostName, "home");
-            ns.exec("phase1.js", hostName, 1, target, hostName);
+    var runningThreads = 0; // iterator
+    
+    while (true) {
+        
+        while (ns.getServerSecurityLevel(target) == ns.getServerMinSecurityLevel(target)) {
+            // while the two values are equal, signal for phase 2 and then exit:
+            // no need to wait for anything to complete
+            ns.print(target + "does not need weakened! peace.");
+            await ns.writePort(portNumber, 2);
             ns.exit();
-            await ns.sleep(111);
-        } else {
-            // just the basics
-            var fileBox = ["1xhack.js","1xweak.js","1xgrow.js"];
-            await ns.scp(fileBox, hostName, "home");
-        }   
-    }
-
-    var runningThreads = 0;
-
-    while (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
-        var securityDifference = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target);
-        var weakenAmt10 = ns.weakenAnalyze(10);
-        var weakThreads = securityDifference.toFixed(2) / weakenAmt10 * 10 - runningThreads;
-        var ramNeeded = 1.75 * weakThreads;
-
-        ns.clearLog();
-        ns.tail();
-
-        ns.print("*** Targeting: " + target + " on " + hostName);
-        ns.print("*** Security difference: " + securityDifference.toFixed(2));
-        ns.print("*** Weaken x10 impact: " + weakenAmt10);
-        ns.print("*** Threads run: " + runningThreads + " Threads needed: " + weakThreads.toFixed(0));
-	    ns.print("*** " + hostName + " RAM available: " + hostRAM + "gb");
-        ns.print("*** RAM required: " + ramNeeded);
-
-        if (weakThreads >= 10 && hostRAM > 17.5) {
-            var rt10 = runningThreads + 10;
-            ns.exec("1xweak.js", hostName, 10, target, rt10);
-            var runningThreads = rt10;
-            await ns.sleep(45);
+            await ns.sleep(101); // just in case
         }
-        if (weakThreads < 10 && weakThreads > 0 && hostRAM > 1.75) {
+
+        var weakenRAM = 1.75; // Amt of RAM needed for 1 1xweak.js thread. adjust if needed.
+
+        ns.disableLog("sleep","exec"); // no sleep log spam please!
+
+        var hostRAMTotal = ns.getServerMaxRam(hostName);
+        var hostRAM = hostRAMTotal - ns.getServerUsedRam(hostName);
+
+        var curSecurity = ns.getServerSecurityLevel(target);
+        var minSecurity = ns.getServerMinSecurityLevel(target);
+        var securityDifference = curSecurity - minSecurity;
+
+        var weakenAmt = ns.weakenAnalyze(1); // default weaken level is 0.05 but this can change
+        var weakThreads = securityDifference / weakenAmt; // total threads needed
+        var threadsRemaining = weakThreads - runningThreads; // rounding down is fine
+
+        var ram50 = weakenRAM * 50;
+        var ram20 = weakenRAM * 20;
+        var ram9 = weakenRAM * 9;
+        var ram5 = weakenRAM * 5;
+        // you can uncomment the line below if you want to always see tail logs
+        ns.tail();
+        ns.clearLog();
+        // Print dialogs
+        ns.print("Host: " + hostName + "Target: " + target);
+        ns.print("Target security: " + curSecurity + "/" + minSecurity);
+        ns.print("Weaken amount: " + weakenAmt);
+        ns.print("Difference: " + securityDifference);
+        ns.print("Total threads needed: " + weakThreads);
+        ns.print("Threads remaining: " + threadsRemaining);
+        ns.print("Threads run: " + runningThreads);
+            
+        // NOW we really do stuff
+        if ((weakThreads - runningThreads) >= 50 && hostRAM > ram50) {
+            var rt50 = runningThreads + 50;
+            ns.exec("1xweak.js", hostName, 50, target, rt50);
+            var runningThreads = rt50;
+            await ns.sleep(45);
+            continue;
+        } // end 50x deployment
+        await ns.sleep(75);
+        if ((weakThreads - runningThreads) >= 20 && hostRAM > ram20) {
+            var rt20 = runningThreads + 20;
+            ns.exec("1xweak.js", hostName, 20, target, rt20);
+            var runningThreads = rt20;
+            await ns.sleep(45);
+            continue;
+        } // end 20x deployment
+        await ns.sleep(75);
+        if ((weakThreads - runningThreads) >= 9 && hostRAM > ram9) {
+            var rt9 = runningThreads + 9;
+            ns.exec("1xweak.js", hostName, 9, target, rt9);
+            var runningThreads = rt9;
+            await ns.sleep(45);
+            continue;
+        } // end 10x deployment
+        await ns.sleep(75);
+        if ((weakThreads - runningThreads) >= 5 && hostRAM > ram5) {
+            var rt5 = runningThreads + 5;
+            ns.exec("1xweak.js", hostName, 5, target, rt5);
+            var runningThreads = rt5;
+            await ns.sleep(45);
+            continue;
+        } // end 5x deployment
+        await ns.sleep(75);
+        if ((weakThreads - runningThreads) >= 1 && hostRAM > weakenRAM) {
             var rt1 = runningThreads + 1;
             ns.exec("1xweak.js", hostName, 1, target, rt1);
             var runningThreads = rt1;
             await ns.sleep(45);
-        }
-        if (weakThreads == 0) {
-            // get weaken time
-            var wTime = ns.getWeakenTime(target);
-            ns.print("Awaiting script execution: " + ns.tFormat(wTime, "00:00"));
-            await ns.sleep(wTime);
-        }
+            continue;
+        } // end single deployment
+
+        var weakTimes = ns.getWeakenTime(target);
         
+        if (hostRAM < weakenRAM || threadsRemaining == 0) {
+            var statusMessage="Waiting: 0/100% of total: " + ns.nFormat(weaktimes, '00:00');
+            await ns.sleep(weakTimes / 3);
+            var statusMessage="Waiting: 33/100% of total: " + ns.nFormat(weaktimes, '00:00');
+            await ns.sleep(weakTimes / 3);
+            var statusMessage="Waiting: 67/100% of total: " + ns.nFormat(weaktimes, '00:00');
+            await ns.sleep(weakTimes / 3);
+            var statusMessage="Waiting finished.";
+            ns.print("Resetting running thread count to continue.");
+            runningThreads = 0;
+            
+            await ns.sleep(101);
+            continue;
+        }
+        ns.print(statusMessage);
 
+        await ns.sleep(303); // just in case
+        continue;
         // ns.exit();
-        await ns.sleep(111);
-    }
-    ns.print("*** Security level is now: " + ns.getServerSecurityLevel(target));
-    ns.print("*** Executing phase 2 on " + hostName + " against " + target);
-    ns.exec("phase2.js", hostName, 1, target, hostName, portNumber);
-    ns.print("*** Completed.");
+        await ns.sleep(111); // f0r safe-keeping
+    } // ends server security levels unequal check
 
-    // BEGIN COMMANDER MODE CODE
-    // THIS WILL LISTEN TO A PORT SPECIFIED TO COMMAND THE PHASE 2 AND 3 SCRIPTS TO FIRE
-
-    var lastSignal = "(awaiting)";
-    var i = 1; // Iterator to count loop cycles
-
-    while (true) {
-        var pauseCycle = false;
-
-        while (pauseCycle == false) {
-            // LISTENER SCRIPT GOOOOOO....
-            let signal = ns.readPort(portNumber);
-            ns.disableLog("run");
-            ns.clearLog();
-            ns.print("Current signal: " + signal);
-            ns.print("Last signal: " + lastSignal);
-            ns.print("Port #: " + portNumber + " Loop #: " + i);
-
-            if (signal == 3) {
-                ns.run("phase3.js", 1, target, hostName, portNumber);
-                var lastSignal = "Activate Phase 3";
-                var pauseCycle = true;
-                await ns.sleep(11);
-                continue;
-            }
-            if (signal == 2) {
-                ns.run("phase2.js", 1, target, hostName, portNumber);
-                ++i;
-                var lastSignal = "Activate Phase 2";
-                var pauseCycle = true;
-                await ns.sleep(31);
-            }
-            if (signal == "NULL PORT DATA") {
-                // pick your nose
-                await ns.sleep(19);
-                continue;
-            } else {
-                var lastSignal = signal;
-                pauseCycle = true;
-                await ns.sleep(179);
-                continue;
-            }
-        }
-        while (pauseCycle == true) {
-            ns.print("*** ON 0.9 SECOND COOLDOWN ***");
-            await ns.sleep(901);
-            var pauseCycle = false;
-        }
-        // sleep. always sleep.
-        await ns.sleep(31);
-    }
-}
+} // end it all
