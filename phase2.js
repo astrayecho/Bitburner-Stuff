@@ -37,14 +37,12 @@ export async function main(ns) {
 	var maxMoney = ns.getServerMaxMoney(target);
 	var growParam = ns.getServerGrowth(target);	
 
-	// POST-PHASE PROCESSING VARS
-	var delayed = false; // Used for waiting to trigger the phase 3 launch
-	var postSetup = false; // Used for setting up the delay to trigger phase 3
-
 	// Threads run, used as iterator
 	var runningThreads = 0;
+	// Processing threads var
+	var processingThreads = true;
 	
-	while (ns.getServerMoneyAvailable(target) < maxMoney) {
+	while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) && processingThreads == true) {
 
 		// VARS inside while loop so they remain updated during the loop
 		var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName); // Available RAM
@@ -99,60 +97,47 @@ export async function main(ns) {
             runningThreads = rt1;
             await ns.sleep(25);
 			continue;
-        } else {
+        } 
+		if (growThreads > 0 && hostRAM < needRAMx1) {
 			// take a breather
-			await ns.sleep(45);
+			await ns.sleep(4005);
+			continue;
 		}
 		if (growThreads <= 0) {
-			// Do some quick refactoring just in case
-			// after waiting for at least grow threads to complete
-			let gTime = ns.getGrowTime(target);
-			await ns.sleep(gTime + 5);
-			curMoney = ns.getServerMoneyAvailable(target);
-			ns.print("Current fund$ available: " + curMoney + "/" + maxMoney);
-			ns.print(portNumber, "P2: F41L3D?");
+			// Time to sign off to the post-processing section
+			processingThreads = false;
 			await ns.sleep(111);
-			// ns.exit();
 		}
 
 		// Sleep just in case so the while loop doesn't hang
 		await ns.sleep(133);
-	}
+	} // end processingThreads
 
 	var wTime = ns.getWeakenTime(target);
-	var finishDelay = wTime / 3.3;
+	var finishDelay = wTime / 3.013;
 	var delay1 = true;
 	var delay2 = false;
 	var delay3 = false;
 	var finishUP = false;
 	var keepAlive = true;
 
-	if (ns.getServerMaxMoney(target) == ns.getServerMoneyAvailable(target)) {
-		// set it up
-		var postSetup = true;
-		var finishUP = true;
-		delay1 = false;
-	}
+	while (keepAlive == true || ns.getServerMaxMoney(target) == ns.getServerMoneyAvailable(target)) {
 	
-
-	while (postSetup == true && keepAlive == true) {
-		// await ns.writePort(portNumber, "P2: 0/100%");
-
 		while (delay1 == true) {
 			await ns.sleep(finishDelay);
-			await ns.writePort(portNumber, "P2: 33/100%");
+			await ns.writePort(portNumber, "P2 Finishing 33%");
 			delay2 = true;
 			delay1 = false;
 		}
 		while (delay2 == true) {
 			await ns.sleep(finishDelay);
-			await ns.writePort(portNumber, "P2: 67/100%");
+			await ns.writePort(portNumber, "P2 Finishing 67%");
 			delay3 = true;
 			delay2 = false;
 		}
 		while (delay3 == true) {
-			await ns.sleep(finishDelay + 101); // Add an extra little bit for safety
-			await ns.writePort(portNumber, "P2: 100/100%");
+			await ns.sleep(finishDelay - 505); // Add an extra little bit for safety
+			await ns.writePort(portNumber, "P2: 100%");
 			finishUP = true;
 			delay3 = false;
 		}

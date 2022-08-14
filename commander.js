@@ -111,6 +111,8 @@ export async function main(ns) {
     // this is called outsite of any while loops so you can just kill the process
     // if you don't want it.
     ns.run("grail.js", 1, target);
+    // open a tail thread as well for this script, for you to monitor progress
+    ns.tail(); 
 	
     var serverArray = [target, hostName]; // array used for the root access check
         
@@ -163,10 +165,7 @@ export async function main(ns) {
         await ns.run("phase1.js", 1, target, hostName, portNumber);
         activePhase = "Phase 1";
         ns.print("*** Completed.");
-    }
-
-    // Begin target server funds check 
-    if (ns.getServerMoneyAvailable(target) != ns.getServerMaxMoney(target)) {
+    } else if (ns.getServerMoneyAvailable(target) != ns.getServerMaxMoney(target)) {
         ns.print("*** Executing phase 2: grow funds on " + target);
         await ns.run("phase2.js", 1, target, hostName, portNumber);
         activePhase = "Phase 2";
@@ -190,7 +189,6 @@ export async function main(ns) {
 
     while (true) {
         var pauseCycle = false;
-        var curSignal = "...echoes..."
 
         while (pauseCycle == false) {
             // LISTENER SCRIPT GOOOOOO....
@@ -198,7 +196,7 @@ export async function main(ns) {
             ns.disableLog("run","sleep");
             ns.clearLog();
             ns.print(statusMessage);
-            ns.print("Current signal: " + curSignal);
+            ns.print("Current signal: " + signal);
             ns.print("Last signal: " + lastSignal);
             ns.print("Current phase: " + activePhase);
             ns.print("Port #: " + portNumber + " Loop #: " + i);
@@ -207,7 +205,6 @@ export async function main(ns) {
                 ns.run("phase3.js", 1, target, hostName, portNumber);
                 var lastSignal = "Activate: Phase 3";
                 activePhase = "Phase 3";
-                curSignal = 3;
                 var pauseCycle = true;
                 await ns.sleep(33);
                 continue;
@@ -217,17 +214,14 @@ export async function main(ns) {
                 ++i;
                 lastSignal = "Activate: Phase 2";
                 activePhase = "Phase 2";
-                curSignal = 2;
                 var pauseCycle = true;
                 await ns.sleep(33);
                 continue;
             }
             if (signal == "NULL PORT DATA") {
-                curSignal = "...echoes...";
                 await ns.sleep(202);
                 continue;
             } else {
-                curSignal = signal;
                 var lastSignal = signal;
                 pauseCycle = true;
                 await ns.sleep(179);
@@ -235,7 +229,7 @@ export async function main(ns) {
             }
         } // end pauseCycle=false loop
         while (pauseCycle == true) {
-            statusMessage = "*** ON 0.7 SECOND COOLDOWN ***";
+            statusMessage = ".7sec COOLDOWN";
             await ns.sleep(711);
             var pauseCycle = false;
         } // end pauseCycle=true loop

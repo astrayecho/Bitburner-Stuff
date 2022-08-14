@@ -57,13 +57,15 @@ export async function main(ns) {
         ns.tail();
         ns.clearLog();
         // Print dialogs
-        ns.print("Host: " + hostName + "Target: " + target);
+        var statusMessage = "Processing";
+        ns.print("Host: " + hostName + " Target: " + target);
         ns.print("Target security: " + curSecurity + "/" + minSecurity);
         ns.print("Weaken amount: " + weakenAmt);
         ns.print("Difference: " + securityDifference);
         ns.print("Total threads needed: " + weakThreads);
         ns.print("Threads remaining: " + threadsRemaining);
         ns.print("Threads run: " + runningThreads);
+        ns.print("Status: " + statusMessage);
             
         // NOW we really do stuff
         if ((weakThreads - runningThreads) >= 50 && hostRAM > ram50) {
@@ -98,33 +100,28 @@ export async function main(ns) {
             continue;
         } // end 5x deployment
         await ns.sleep(75);
-        if ((weakThreads - runningThreads) >= 1 && hostRAM > weakenRAM) {
+        if ((weakThreads - runningThreads) > 0 && hostRAM > weakenRAM) {
             var rt1 = runningThreads + 1;
             ns.exec("1xweak.js", hostName, 1, target, rt1);
             var runningThreads = rt1;
             await ns.sleep(45);
             continue;
         } // end single deployment
-
-        var weakTimes = ns.getWeakenTime(target);
         
-        if (hostRAM < weakenRAM || threadsRemaining == 0) {
-            var statusMessage="Waiting: 0/100% of total: " + ns.nFormat(weaktimes, '00:00');
-            await ns.sleep(weakTimes / 3);
-            var statusMessage="Waiting: 33/100% of total: " + ns.nFormat(weaktimes, '00:00');
-            await ns.sleep(weakTimes / 3);
-            var statusMessage="Waiting: 67/100% of total: " + ns.nFormat(weaktimes, '00:00');
-            await ns.sleep(weakTimes / 3);
-            var statusMessage="Waiting finished.";
-            ns.print("Resetting running thread count to continue.");
-            runningThreads = 0;
+        while (hostRAM < weakenRAM || (weakThreads - runningThreads) == 0) {
+            await ns.writePort(portNumber, "P1 Waiting 0/100%");
+            await ns.sleep(ns.getWeakenTime(target) / 3);
+            await ns.writePort(portNumber, "P1 Waiting 33/100%");
+            await ns.sleep(ns.getWeakenTime(target) / 3);
+            await ns.writePort(portNumber, "P1 Waiting 67/100%");
+            await ns.sleep(ns.getWeakenTime(target) / 3);
+            await ns.writePort(portNumber, "P1 Waiting 67/100%");
             
-            await ns.sleep(101);
+            await ns.sleep(1001);
             continue;
         }
-        ns.print(statusMessage);
 
-        await ns.sleep(303); // just in case
+        await ns.sleep(505); // just in case
         continue;
         // ns.exit();
         await ns.sleep(111); // f0r safe-keeping

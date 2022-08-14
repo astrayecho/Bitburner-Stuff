@@ -79,6 +79,7 @@ export async function main(ns) {
 		// First come vars
 		var hackThreadsRemaining = hack15Threads - hackThreadsRun;
 		var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName); // Available RAM
+		var postSetup = false; // this keeps the post-processing from starting up
 
 		// Adding hack/weaken together below since they go hand in hand
 		// For 10x and 20x hack threads, < 1 weaken thread is needed
@@ -128,33 +129,66 @@ export async function main(ns) {
 		continue;
 	}
 
+	if (hackThreadsRun == hack15Threads) {
+		// this 
+		var postSetup = true;
+	}
+
+	// The following vars help control the timing of the script hand-off back to phase 2
+	// delay1,2,3 segment the delay to provide time updates back to the controller script
+	// Flow >> 1 triggers 2, 2 triggers 3, 3 triggers delayed.
 	var delayed = false;
-	var postSetup = false;
+	var delay1 = true;
+	var delay2 = false;
+	var delay3 = false;
 	
-	while (postSetup == false) {
+	while (postSetup == true) {
 		// Wind down with a delay before pushing it back to phase 2
 		if (hackThreadsRun == hack15Threads) {
-			var finishDelay = weakenTime;
-			await ns.writePort(portNumber, "P3 Finishing 0%");
-			await ns.sleep(finishDelay / 3);
-			await ns.writePort(portNumber, "P3 Finishing 33%");
-			await ns.sleep(finishDelay / 3);
-			await ns.writePort(portNumber, "P3 Finishing 67%");
-			await ns.sleep((finishDelay / 3) + 100); // Add an extra second for safety
-			var delayed = true;
-			postSetup = true;
+			var finishDelay = ns.getWeakenTime(target) / 3; // delay based on the processing time of weaken threads
+			
+			// This section increases the final third of the delay segment to about 3/4 second
+			// just to adjust so that script overlapping isn't too extreme. 
+			if (finishDelay > 725) {
+				var finishDelay3 = 755; 
+			} else {
+				var finishDelay3 = finishDelay / 3.369;
+			}
+			ns.print("base delay: " + finishDelay + " delay 3: " + finishDelay3);
+
+			while (delay1 == true) {
+				await ns.writePort(portNumber, "P3 Finishing 0%");
+				await ns.sleep(finishDelay);
+				delay2 = true;
+				delay1 = false;
+			}
+			while (delay2 == true) {
+				await ns.writePort(portNumber, "P3 Finishing 33%");
+				await ns.sleep(finishDelay);
+				delay3 = true;
+				delay2 = false;
+			}
+			while (delay3 == true) {
+				await ns.writePort(portNumber, "P3 Finishing 67%");
+				await ns.sleep(finishDelay3); // using the delay adjustment processing from above
+				delayed = true;
+				delay3 = false;
+			}
+			// Wrap it up!
+			while (delayed == true) {
+				ns.print("* Returning to phase 2, stand by...");
+				await ns.sleep(303);
+				await ns.writePort(portNumber, 2);
+				ns.print("Thanks for playing.");
+				await ns.sleep(133);
+				await ns.exit();
+				await ns.sleep(333);
+				// ns.closeTail();
+			}
 		}
-	}
-	// Now we can wrap up and sent to phase 2
-	if (delayed == true) {
-		ns.print("* Hack threads run: " + hackThreadsRun);
-		ns.print("* Returning to phase 2, stand by...");
-		await ns.sleep(151);
-		await ns.writePort(portNumber, 2);
-		ns.print("Thanks for playing.");
-		await ns.sleep(133);
-		await ns.exit();
-		// ns.closeTail();
+
+		// security sleep
+		await ns.sleep(111);
 	}
 
 }
