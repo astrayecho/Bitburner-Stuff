@@ -107,11 +107,7 @@ export async function main(ns) {
 	
 	ns.disableLog("sleep"); // so we don't get a lot of sleep spam in the logs
     
-    // runs a grail thread while this is going so we can see the money roll in
-    // this is called outsite of any while loops so you can just kill the process
-    // if you don't want it.
-    ns.run("grail.js", 1, target);
-    // open a tail thread as well for this script, for you to monitor progress
+    // open a tail thread for this script, for you to monitor progress
     ns.tail(); 
 	
     var serverArray = [target, hostName]; // array used for the root access check
@@ -147,6 +143,7 @@ export async function main(ns) {
         await ns.scp(fileBox, hostName, "home");
         ns.exec("commander.js", hostName, 1, target, hostName, portNumber);
         await ns.sleep(505);
+        ns.closeTail();
         ns.exit(); // new commander process should be launched, so shut down!
         await ns.sleep(111);
     } else {
@@ -163,74 +160,82 @@ export async function main(ns) {
     if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target)) {
         ns.print("*** Executing phase 1: weaken " + target);
         await ns.run("phase1.js", 1, target, hostName, portNumber);
-        activePhase = "Phase 1";
+        activePhase = "1 (initial weaken)";
         ns.print("*** Completed.");
     } else if (ns.getServerMoneyAvailable(target) != ns.getServerMaxMoney(target)) {
         ns.print("*** Executing phase 2: grow funds on " + target);
         await ns.run("phase2.js", 1, target, hostName, portNumber);
-        activePhase = "Phase 2";
+        activePhase = "2 (grow/weaken)";
         ns.print("*** Completed.");
     } else {
         ns.print("*** Executing phase 3: hack " + target);
         await ns.run("phase3.js", 1, target, hostName, portNumber);
-        activePhase = "Phase 3";
+        activePhase = "3 (hack/weaken)";
         ns.print("*** Completed.");
     } // end target funds check
 
+    // runs a grail thread while this is going so we can see the money roll in
+    // this is called outsite of any while loops so you can just kill the process
+    // if you don't want it.
+    ns.run("grail.js", 1, target);
 
     // BEGIN LISTENER CODE
     // THIS WILL LISTEN TO A PORT SPECIFIED TO COMMAND THE PHASE 2 AND 3 SCRIPTS TO FIRE
     // (It only activates phase 1 on first-run for the initial weaken, all other weakens
     // are fired alongside the grow/hack thread processes.)
 
+    var signal = "...echoes...";
     var lastSignal = "(awaiting)"; // default message until first signal is received
-    var statusMessage = "Ready."; // message when off cooldown
+    var pauseCycle = false; // default state to start listener
     var i = 1; // Iterator to (hopefully) count loop cycles
 
     while (true) {
-        var pauseCycle = false;
+        ns.disableLog("run","sleep");
+        ns.clearLog();
+        ns.print("Target: " + target + " Host: " + hostName);
+        ns.print("Port #: " + portNumber + " Loop #: " + i);
+        ns.print("Phase: " + activePhase);
+        ns.print("Current signal: " + signal);
+        ns.print("Last signal: " + lastSignal);
 
-        while (pauseCycle == false) {
+        if (pauseCycle == false) {
             // LISTENER SCRIPT GOOOOOO....
-            let signal = ns.readPort(portNumber);
-            ns.disableLog("run","sleep");
-            ns.clearLog();
-            ns.print(statusMessage);
-            ns.print("Current signal: " + signal);
-            ns.print("Last signal: " + lastSignal);
-            ns.print("Current phase: " + activePhase);
-            ns.print("Port #: " + portNumber + " Loop #: " + i);
-
+            var signal = ns.readPort(portNumber);
+            
             if (signal == 3) {
                 ns.run("phase3.js", 1, target, hostName, portNumber);
-                var lastSignal = "Activate: Phase 3";
-                activePhase = "Phase 3";
+                var lastSignal = "Activate Phase 3";
+                activePhase = "3 (hack/weaken)";
+                await ns.sleep(303);
                 var pauseCycle = true;
                 await ns.sleep(33);
                 continue;
             }
             if (signal == 2) {
                 ns.run("phase2.js", 1, target, hostName, portNumber);
+                await ns.sleep(303);
                 ++i;
-                lastSignal = "Activate: Phase 2";
-                activePhase = "Phase 2";
+                lastSignal = "Activate Phase 2";
+                activePhase = "2 (grow/weaken)";
                 var pauseCycle = true;
                 await ns.sleep(33);
                 continue;
             }
             if (signal == "NULL PORT DATA") {
-                await ns.sleep(202);
+                signal = "..echoes.."
+                await ns.sleep(505);
                 continue;
             } else {
                 var lastSignal = signal;
+                await ns.sleep(303);
                 pauseCycle = true;
-                await ns.sleep(179);
+                await ns.sleep(101);
                 continue;
             }
         } // end pauseCycle=false loop
-        while (pauseCycle == true) {
-            statusMessage = ".7sec COOLDOWN";
-            await ns.sleep(711);
+        if (pauseCycle == true) {
+            signal = "(on cooldown)";
+            await ns.sleep(505);
             var pauseCycle = false;
         } // end pauseCycle=true loop
         // sleep. always sleep.
