@@ -8,7 +8,7 @@
 // That's all.
 
 export async function main(ns) {
-	// Get a list of purchased servers, output to terminal
+	// Gets a list of all purchased servers and outputs the array to the terminal
 	var slist = ns.getPurchasedServers();
 	ns.tprint(slist);
 }
