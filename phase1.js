@@ -111,13 +111,16 @@ export async function main(ns) {
         } // end single deployment
         
         if (hostRAM < weakenRAM || (weakThreads - runningThreads) == 0) {
-            await ns.writePort(portNumber, "P1 Waiting 0/100%");
-            await ns.sleep(ns.getWeakenTime(target) / 3);
-            await ns.writePort(portNumber, "P1 Waiting 33/100%");
-            await ns.sleep(ns.getWeakenTime(target) / 3);
-            await ns.writePort(portNumber, "P1 Waiting 67/100%");
-            await ns.sleep(ns.getWeakenTime(target) / 3.01);
-            await ns.writePort(portNumber, "P1 Waiting 100%");
+            var finishDelay = ns.getWeakenTime(target) / 20.015; // delay based on the processing time of weaken threads
+			
+			await ns.writePort(portNumber, "P1: 0/100%");
+		
+			for (var i=1; i<21; i++) {
+				let percentS = i * 5;
+				let portSignal = "P1: " + percentS + "/100%";
+				await ns.sleep(finishDelay);
+				await ns.writePort(portNumber, portSignal);
+			}
 
             if ((weakThreads - runningThreads) == 0) {
                 await ns.writePort(portNumber, 2);

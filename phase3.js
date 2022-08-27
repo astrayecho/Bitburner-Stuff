@@ -25,50 +25,24 @@ export async function main(ns) {
 	const {chance, growth} = ns.getHackingMultipliers();
 
 	// RAM needed per grow() and weaken() and hack() thread
-	var growRAM = 1.75; // Adjust this if the requirements change in the future
 	var weakenRAM = 1.75; // Adjust this if the requirements change in the future
 	var hackRAM = 1.7; // Adjust this if the requirements change in the future
 
-	// H/G/W Times output to milliseconds, so divide by 1000
-	// to get real seconds.
-	var hackTime = ns.getHackTime(target) / 1000; 
-	var growTime = ns.getGrowTime(target) / 1000; 
-	var weakenTime = ns.getWeakenTime(target) / 1000;
-
 	// Target server variables
-	var curMoney = Math.floor(ns.getServerMoneyAvailable(target) / 1000); // Current $ available on target server in thousands
-	var maxMoney = ns.getServerMaxMoney(target) / 1000; // Maximum $ for target server in thousands
+	var curMoney = ns.getServerMoneyAvailable(target); // Current $ available on target server
+	var maxMoney = ns.getServerMaxMoney(target); // Maximum $ for target server
 	var money15 = maxMoney * 0.15; // 15% of max money, a rough target for staying at/above 85% in funds
 
 	// Hack variables
 	var hackAmount = ns.hackAnalyze(target) * 100; // % of server money hacked per thread
-	var hack15Threads = Math.floor(15 / hackAmount) + 1; // # of threads needed to hack 15% of server money
+	var hack15Threads = Math.floor(15 / hackAmount) + 1; // # of threads needed to hack 15%+ of server money
 	var hack15Impact = hack15Threads * 0.002; // Security impact of running (hack() x hack15Threads)
-	var hack15Time = hackTime * hack15Threads / 60; // Time in minutes to run it all
-
-	// Grow variables
-	var growthParameter = ns.getServerGrowth(target); // Target's growth parameter. Higher = better.
-	var grow15Threads = Math.floor(ns.growthAnalyze(target, 1.18015) + 1); // # of threads to grow back 15%
-	var grow15Impact = grow15Threads * 0.004; // Security lvl impact of running (grow() x grow15Threads)
-	var grow15Time = (grow15Threads * growTime) / 60; // Time in minutes to complete grow threads 
 	
 	// Weaken Variables
-	var weaken15Threads = Math.floor(hack15Impact / 0.05) + 1 + Math.floor(grow15Impact / 0.05); // # of threads to weaken host back to minimum, +1 just in case
-	var weaken15Time = (weaken15Threads * weakenTime) / 60;  // Time in minutes to complete weaken threads
+	var weaken15Threads = Math.floor(hack15Impact / 0.05) + 1; // # of threads to weaken host back to minimum, +1 just in case
 
-	ns.clearLog();
+	// use if needed to debug
 	// ns.tail();
-
-	ns.print("Target: " + target + " 15% of target: " + (money15 / 1000) + "k");
-	ns.print("Current/Max $$: " + curMoney.toLocaleString('en-us') + "k/" + maxMoney.toLocaleString('en-us') + "k");
-	ns.print("Player hack chance multiplier: " + chance.toFixed(4));
-	ns.print("Player growth multiplier: " + growth.toFixed(4));
-	ns.print("H/G/W Times (seconds): H " + hackTime.toFixed(0) + "/G " + growTime.toFixed(0) + "/W " + weakenTime.toFixed(0));
-	ns.print("Hack% per thread: " + hackAmount.toFixed(2) + "% Threads to 15%: " + hack15Threads);
-	ns.print("Security Impact: " + hack15Impact.toFixed(3) + " Weakens needed: " + weaken15Threads);
-	ns.print("Growth parameter: " + growthParameter + " Threads to 15%: " + grow15Threads);
-	ns.print("Times to H/G/W 15% of this server: ");
-	ns.print("Hack: " + hack15Time.toFixed(2) + "mins. Grow: " + grow15Time.toFixed(2) + "mins. Weaken: " + weaken15Time.toFixed(2) + "mins.");
 
 	// holy crap time to actually do something
 	// but first the iterator var
@@ -76,6 +50,17 @@ export async function main(ns) {
 	var hackThreadsRun = 0;
 
 	while (hackThreadsRun < hack15Threads) {
+		ns.disableLog("sleep");
+		ns.disableLog("getServerMaxRam");
+		ns.disableLog("getServerUsedRam");
+		ns.clearLog();
+
+		ns.print("Target: " + target + " 15% of target: " + (money15 / 1000) + "k");
+		ns.print("Current/Max $$: " + curMoney.toLocaleString('en-us') + "k/" + maxMoney.toLocaleString('en-us') + "k");
+		ns.print("Player hack chance multiplier: " + chance.toFixed(4));
+		ns.print("Hack% per thread: " + hackAmount.toFixed(2) + "% Threads to 15%: " + hack15Threads);
+		ns.print("Security Impact: " + hack15Impact.toFixed(3) + " Weakens needed: " + weaken15Threads);
+
 		// First come vars
 		var hackThreadsRemaining = hack15Threads - hackThreadsRun;
 		var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName); // Available RAM
@@ -133,58 +118,29 @@ export async function main(ns) {
 		// this 
 		var postSetup = true;
 	}
-
-	// The following vars help control the timing of the script hand-off back to phase 2
-	// delay1,2,3 segment the delay to provide time updates back to the controller script
-	// Flow >> 1 triggers 2, 2 triggers 3, 3 triggers delayed.
-	var delayed = false;
-	var delay1 = true;
-	var delay2 = false;
-	var delay3 = false;
 	
-	while (postSetup == true) {
+	while (postSetup) {
 		// Wind down with a delay before pushing it back to phase 2
 		if (hackThreadsRun == hack15Threads) {
-			var finishDelay = ns.getWeakenTime(target) / 3; // delay based on the processing time of weaken threads
+			var finishDelay = ns.getWeakenTime(target) / 10.077; // delay based on the processing time of weaken threads
 			
-			// This section increases the final third of the delay segment to about 3/4 second
-			// just to adjust so that script overlapping isn't too extreme. 
-			if (finishDelay > 725) {
-				var finishDelay3 = 755; 
-			} else {
-				var finishDelay3 = finishDelay / 3.369;
-			}
-			ns.print("base delay: " + finishDelay + " delay 3: " + finishDelay3);
-
-			while (delay1 == true) {
-				await ns.writePort(portNumber, "P3 Finishing 0%");
+			await ns.writePort(portNumber, "P3: 0/100%");
+			ns.exec("1xweak.js", hostName, 2, target, "p3"); // little extra weakens just in case
+		
+			for (var i=1; i<11; i++) {
+				let percentS = i * 10;
+				let portSignal = "P3: " + percentS + "/100%";
 				await ns.sleep(finishDelay);
-				delay2 = true;
-				delay1 = false;
+				await ns.writePort(portNumber, portSignal);
 			}
-			while (delay2 == true) {
-				await ns.writePort(portNumber, "P3 Finishing 33%");
-				await ns.sleep(finishDelay);
-				delay3 = true;
-				delay2 = false;
-			}
-			while (delay3 == true) {
-				await ns.writePort(portNumber, "P3 Finishing 67%");
-				await ns.sleep(finishDelay3); // using the delay adjustment processing from above
-				delayed = true;
-				delay3 = false;
-			}
-			// Wrap it up!
-			while (delayed == true) {
-				ns.print("* Returning to phase 2, stand by...");
-				await ns.sleep(303);
-				await ns.writePort(portNumber, 2);
-				ns.print("Thanks for playing.");
-				await ns.sleep(133);
-				await ns.exit();
-				await ns.sleep(333);
-				// ns.closeTail();
-			}
+			
+			ns.print("* Returning to phase 2, stand by...");
+			await ns.sleep(303);
+			await ns.writePort(portNumber, 2);
+			ns.print("Thanks for playing.");
+			await ns.exit();
+			await ns.sleep(333);
+			// ns.closeTail();
 		}
 
 		// security sleep

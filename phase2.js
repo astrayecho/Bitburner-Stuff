@@ -22,6 +22,12 @@ export async function main(ns) {
 	var portNumber = ns.args[2];
 	await ns.sleep(135);
 
+	if (ns.getServerMaxMoney(target) == ns.getServerMoneyAvailable(target)) {
+		ns.writePort(portNumber, 3);
+		ns.exit();
+		await ns.sleep(111);
+	}
+
 	// RAM needed per grow() and weaken() thread
 	var growRAM = 1.75; // Adjust this if the requirements change in the future
 	var weakenRAM = 1.75; // Adjust this if the requirements change in the future
@@ -42,12 +48,12 @@ export async function main(ns) {
 	// Processing threads var
 	var processingThreads = true;
 	
-	while (ns.getServerMoneyAvailable(target) < ns.getServerMaxMoney(target) && processingThreads == true) {
+	while (processingThreads == true) {
 
 		// VARS inside while loop so they remain updated during the loop
 		var hostRAM = ns.getServerMaxRam(hostName) - ns.getServerUsedRam(hostName); // Available RAM
 		var curMoney = ns.getServerMoneyAvailable(target);
-		var moneyMultiplier = maxMoney / curMoney * 1.25; // Divide max / current $
+		var moneyMultiplier = maxMoney / curMoney * 1.05; // Divide max / current $
 		var growThreads = Math.floor(ns.growthAnalyze(target, moneyMultiplier)) - runningThreads;
 		var weakenThreads = Math.floor(growThreads / 5);
 		var requiredRAM = (growThreads * growRAM) + (weakenThreads * weakenRAM);
@@ -60,13 +66,11 @@ export async function main(ns) {
 		ns.clearLog();
 		// ns.tail();
 
-		ns.print("* Target server: " + target + " Host: " + hostName);
-		ns.print("* Port #: " + portNumber);
-		ns.print("* Target current/max money: $" + curMoney.toFixed(0) + "/$" + maxMoney);
-		ns.print("* Growth parameter: " + growParam);
-		ns.print("* Threads run: " + runningThreads);
+		ns.print("* Target: " + target + " Host: " + hostName + " Port #: " + portNumber);
+		ns.print("* Target current/max $$$: $" + ns.nFormat(curMoney, "0.00a") + "/$" + ns.nFormat(maxMoney, "0.00a"));
+		ns.print("* Growth parameter: " + growParam + " Threads run: " + runningThreads);
 		ns.print("* Grow threads needed: " + growThreads + " weakens: " + weakenThreads);
-		ns.print("* RAM Avail.: " + hostRAM + " RAM Required: " + requiredRAM);
+		ns.print("* RAM Avail.: " + hostRAM.toFixed(2) + " RAM Req'd: " + requiredRAM);
 		
 
 		if (growThreads >= 50 && hostRAM > needRAMx50) {
@@ -76,10 +80,7 @@ export async function main(ns) {
             runningThreads = rt50;
             await ns.sleep(45);
 			continue;
-        } else {
-			// take a breather
-			await ns.sleep(25);
-		}
+        }
 		if (growThreads >= 10 && hostRAM > needRAMx10) {
             let rt10 = runningThreads + 10;
             ns.exec("1xgrow.js", hostName, 10, target, rt10);
@@ -87,11 +88,8 @@ export async function main(ns) {
             runningThreads = rt10;
             await ns.sleep(25);
 			continue;
-        } else {
-			// take a breather
-			await ns.sleep(25);
-		}
-        if (growThreads < 10 && growThreads > 0 && hostRAM > needRAMx1) {
+        }
+        if (growThreads >= 1 && hostRAM > needRAMx1) {
             let rt1 = runningThreads + 1;
             ns.exec("1xgrow.js", hostName, 1, target, rt1);
             runningThreads = rt1;
@@ -100,7 +98,7 @@ export async function main(ns) {
         } 
 		if (growThreads > 0 && hostRAM < needRAMx1) {
 			// take a breather
-			await ns.sleep(4005);
+			await ns.sleep(1505);
 			continue;
 		}
 		if (growThreads <= 0) {
@@ -114,51 +112,34 @@ export async function main(ns) {
 	} // end processingThreads
 
 	var wTime = ns.getWeakenTime(target);
-	var finishDelay = wTime / 3.013;
-	var delay1 = true;
-	var delay2 = false;
-	var delay3 = false;
-	var finishUP = false;
+	var finishDelay = wTime / 10.047; //slightly less than 10% for each increment
 	var keepAlive = true;
 
-	while (keepAlive == true || ns.getServerMaxMoney(target) == ns.getServerMoneyAvailable(target)) {
+	while (keepAlive || ns.getServerMaxMoney(target) == ns.getServerMoneyAvailable(target)) {
 	
-		while (delay1 == true) {
+		await ns.writePort(portNumber, "P2: 0/100%");
+		ns.exec("1xweak.js", hostName, 2, target, "p2");
+		
+		for (var i=1; i<11; i++) {
+			let percentS = i * 10;
+			let portSignal = "P2: " + percentS + "/100%";
 			await ns.sleep(finishDelay);
-			await ns.writePort(portNumber, "P2 Finishing 33%");
-			delay2 = true;
-			delay1 = false;
-		}
-		while (delay2 == true) {
-			await ns.sleep(finishDelay);
-			await ns.writePort(portNumber, "P2 Finishing 67%");
-			delay3 = true;
-			delay2 = false;
-		}
-		while (delay3 == true) {
-			await ns.sleep(finishDelay - 505); // Add an extra little bit for safety
-			await ns.writePort(portNumber, "P2: 100%");
-			finishUP = true;
-			delay3 = false;
+			await ns.writePort(portNumber, portSignal);
 		}
 
-		while (finishUP == true) {
-			ns.print("* Phase 3 incoming, stand by...");
-			await ns.sleep(151);
-			await ns.writePort(portNumber, 3);
-			ns.print("Thanks for playing.");
-			await ns.sleep(133);
-			keepAlive = false;
-			
-			if (keepAlive == false) {
-				await ns.sleep(111);
-				await ns.exit();
-				await ns.sleep(111);
-			}
+		ns.print("* Phase 3 incoming, stand by...");
+		await ns.sleep(151);
+		await ns.writePort(portNumber, 3);
+		ns.print("Thanks for playing.");
+		await ns.sleep(133);
+		keepAlive = false;
+		
+		if (keepAlive == false) {
+			await ns.sleep(111);
+			await ns.exit();
+			await ns.sleep(111);
 		}
-		
-		
-		
+				
 		// just in case
 		await ns.sleep(159);
 	}

@@ -9,7 +9,8 @@ A simply complex management system for destroying your foes... I mean, hacking t
 
 It is launched via the commander.js script which controls setup (processing root access and host server if needed and transferring files to the host server) and rotating through the three individual phases and the system includes the grail.js script (details below) to track up-to-the-second progress on your target server. It can be run entirely from the home server, or by running the commander & phase processes from home while deploying the bulk of the workload (the 1xhack/grow/weak.js scripts) in bulk threads onto a separate host server (personal servers or otherwise). 
 
-**Now includes the Phase System 0.04alpha.zip archive which includes all of the necessary files.** Newer versions are recommended if you see newer ones available in the repository.
+**Now includes the Phase System 0.05alpha.zip archive which includes all of the necessary files.** 
+Newer versions are recommended if you see newer ones available in the repository.
 
 **gr0k.js**
 A simple, static script that prints information about a server to a terminal. Includes current/max money, current max security levels, root access information and if you can/cannot hack it at the present, and hack/grow/weaken process times.

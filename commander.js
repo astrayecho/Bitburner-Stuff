@@ -35,6 +35,12 @@ export async function main(ns) {
     // arguments, nor worry about being limited to only one process because you
     // don't remember them. 
 
+    if (ns.args[0] == "help") {
+        ns.tprint("Use: com TARGET HOST PORT Optional:PHASEHOST(bool)");
+        ns.exit();
+        await ns.sleep(111);
+    }
+
     while (ns.args[0] == null) { 
         ns.tprint("*** commander.js run with no arguments!");
         await ns.sleep(505);
@@ -116,7 +122,7 @@ export async function main(ns) {
         let tar = serverArray[i];
         ns.tprint("Processing root on: " + tar);
 
-        if (tar != "home" && ns.hasRootAccess(tar) == false) {
+        if (ns.hasRootAccess(tar) == false) {
             if (ns.fileExists("BruteSSH.exe", "home")) {ns.brutessh(tar);}
             if (ns.fileExists("FTPCrack.exe", "home")) {ns.ftpcrack(tar);}
             if (ns.fileExists("HTTPWorm.exe", "home")) {ns.httpworm(tar);}
@@ -124,17 +130,17 @@ export async function main(ns) {
             if (ns.fileExists("relaySMTP.exe", "home")) {ns.relaysmtp(tar);}
             // NUKE IT
             await ns.nuke(tar);
+
+            // now check root access to verify
+            if (ns.hasRootAccess(tar) == true) {
+                ns.print("Root access acquired on: " + tar);
+            } else {
+                ns.tprint("Could not acquire root access on " + tar + "! Process ending.");
+                ns.exit();
+                await ns.sleep(101);
+            } // end if check for root access
         }
     } // end for loop to process root access
-
-    // now check root access to verify
-    if (ns.hasRootAccess(target) == true && ns.hasRootAccess(hostName) == true) {
-        // nothing
-    } else {
-        await ns.alert("Could not verify root access! Process ending.");
-        ns.exit();
-        await ns.sleep(101);
-    } // end if check for root access
     
 
     if (selfHosted == true) {
