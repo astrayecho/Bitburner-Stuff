@@ -20,14 +20,13 @@
 export async function main(ns) {
 	var target = ns.args[0];
 
-    // FOR HGW TIMES, DIVIDE BY 1000 TO GET SECONDS
-    // THEN BY 60 TO GET THE TIME IN MINUTES
-	var htime = ns.getHackTime(target);
-	var h2 = Math.round(htime) / 1000 / 60;
-	var gtime = ns.getGrowTime(target);
-	var g2 = Math.round(gtime) / 1000 / 60;
-	var wtime = ns.getWeakenTime(target);
-	var w2 = Math.round(wtime) / 1000 / 60;
+    // Thanks to @saynt-garmo on github for formatting help!
+	var htime = ns.getHackTime(target) / 1000; // hack time
+	var h2 = ns.nFormat(htime, '00:00'); // formatted hack time
+	var gtime = ns.getGrowTime(target) / 1000; // grow time
+	var g2 = ns.nFormat(gtime, '00:00');
+	var wtime = ns.getWeakenTime(target) / 1000; // weaken time
+	var w2 = ns.nFormat(wtime, '00:00');
 
 	// var moneyAvailable = ns.getServerMoneyAvailable(target);
 	var moneyAvailable = ns.getServerMoneyAvailable(target).toLocaleString('en-US');
@@ -38,30 +37,37 @@ export async function main(ns) {
 	var serverminlevel = ns.getServerMinSecurityLevel(target);
 	var serverram = ns.getServerMaxRam(target);
 	var serverusedram = ns.getServerUsedRam(target);
+	var serverGrowth = ns.getServerGrowth(target);
 	var hackingchance = ns.hackAnalyzeChance(target) * 100;
 
 	// BEGIN THE DIALOGS PRINTING TO TERMINAL
 	ns.tprint("***************************************");
-	ns.tprint("*** SERVER INFO FOR " + target);
-    
-    // CODE TO ALERT YOU IF YOU'RE UNABLE TO HACK IT YET
-	if (myhacklevel < srvhacklevel){
-		ns.tprint("*** _>_>_>_CAN_!_NOT_!_h4CK_!_!_!_ ***");
+	ns.tprint("*** SERVER INFO: " + target);
+	ns.tprint("***************************************");
+
+	if (ns.hasRootAccess(target) == true) {
+		ns.tprint("***********  ! ROOTED !  **************");
+	} else {
+		ns.tprint("*********  ! NOT ROOTED !  ************");
 	}
 
-	ns.tprint("***************************************");
-	ns.tprint("*** SERVER USED/TOTAL RAM: " + serverusedram + "/" + serverram + "gb");
+    // CODE TO ALERT YOU IF YOU'RE UNABLE TO HACK IT YET
+	if (myhacklevel < srvhacklevel){
+		ns.tprint("***************************************");
+		ns.tprint("******* > > > CAN NOT h4CK! ! ! *******");
+	}
+
+	ns.tprint("*** SERVER USED/TOTAL RAM: " + serverusedram.toFixed(1) + "/" + serverram + "gb");
 	ns.tprint("***************************************");
 	ns.tprint("*** MONEY AVAIL.: $" + moneyAvailable);
 	ns.tprint("*** MAX: $" + maxmoney.toLocaleString('en-US'));
 	ns.tprint("***************************************");
 	ns.tprint("*** HACK LVL/MY LVL: " + srvhacklevel + " | " + myhacklevel);
 	ns.tprint("*** SECURITY LVL/MIN: " + serverseclevel.toFixed(2) + "/" + serverminlevel);
-	ns.tprint("*** HACK CHANCE: " + hackingchance.toFixed(0) + "% H/G/W TIMES:");
-    // HGW TIME CALCULATIONS ARE ALREADY FACTORED INTO MINUTES ABOVE
-    // THE ".toFixed(2)" HERE TRUNCATES IT TO 2 DECIMAL PLACES
-	ns.tprint("*** H: " + h2.toFixed(1) + "mins G: " + g2.toFixed(1) + "mins W: " + w2.toFixed(1) + "mins");
+	ns.tprint("*** GROWTH PAR.: " + serverGrowth + " HACK CHANCE: " + hackingchance.toFixed(0) + "%");
 	ns.tprint("***************************************");
+	ns.tprint("*** HACK/GROW/WEAKEN TIMES: ");
+	ns.tprint("*** H: " + h2 + " G: " + g2 + " W: " + w2);
 	ns.tprint("***************************************");
 
 	if (ns.args[1] == "c") {
